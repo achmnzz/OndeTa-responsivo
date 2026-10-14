@@ -39,6 +39,12 @@ def update_my_post(post_id):
     """Edita um post específico (apenas se pertencer ao usuário)."""
     return PostController.update_my_post(post_id)
 
+@me_bp.route("/posts/<int:post_id>", methods=["DELETE"])
+@jwt_required()
+def delete_my_post(post_id):
+    """Exclui um post específico (apenas se pertencer ao usuário)."""
+    return PostController.delete_post(post_id)
+
 # --- IMAGENS DOS MEUS POSTS ---
 
 @me_bp.route("/posts/<int:post_id>/images", methods=["GET"])

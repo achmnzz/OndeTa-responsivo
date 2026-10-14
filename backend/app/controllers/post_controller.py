@@ -38,6 +38,13 @@ class PostController:
 
 
     @staticmethod
+    def delete_post(post_id):
+        user = AuthController.authenticate_and_authorize(lean=True)
+        PostService.delete_post(post_id, user.id, is_admin=(user.role == "admin"))
+        return jsonify({}), 204
+
+
+    @staticmethod
     def get_post(post_id, auth=False, admin=False):
         user = None
         if auth or admin:

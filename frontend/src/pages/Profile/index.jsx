@@ -109,6 +109,9 @@ export default function Profile() {
           <button className="profile-header-btn" onClick={() => navigate('/feed', { state: { showMyPosts: true } })}>
             Minhas postagens
           </button>
+          <button className="profile-header-btn" onClick={() => navigate('/map')}>
+            Mapa
+          </button>
           <button className="profile-header-btn" onClick={() => navigate('/create-post')}>
             Criar postagem
           </button>

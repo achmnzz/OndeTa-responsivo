@@ -10,41 +10,53 @@ const STATUS_LABEL = {
   encontrado: 'Encontrado',
 };
 
-function PetCard({ pet, onDelete }) {
+function PetCard({ pet, onDelete, onOpen }) {
   const [deleting, setDeleting] = useState(false);
+  const thumbnailUrl = pet.images?.[0]?.url;
 
-  async function handle_delete() {
+  async function handle_delete(e) {
+    e.stopPropagation();
     setDeleting(true);
     await onDelete(pet.id);
     setDeleting(false);
   }
 
   return (
-    <div className="feed-card">
-      <div className="feed-card-header">
-        <span className={`feed-badge feed-badge--${pet.category}`}>
-          {STATUS_LABEL[pet.category] ?? pet.category}
-        </span>
-        {pet.pet_type && <span className="feed-card-type">{pet.pet_type}</span>}
+    <div className="feed-card" onClick={onOpen} role="button" tabIndex={0}>
+      <div className="feed-card-thumbnail">
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt={pet.pet_name || 'Foto do animal'} />
+        ) : (
+          <span className="feed-card-thumbnail-placeholder">🐾</span>
+        )}
       </div>
-      <h3 className="feed-card-name">{pet.pet_name}</h3>
-      {pet.description && (
-        <p className="feed-card-description">{pet.description}</p>
-      )}
-      {pet.date && (
-        <p className="feed-card-date">
-          {new Date(pet.date).toLocaleDateString('pt-BR')}
-        </p>
-      )}
-      {onDelete && (
-        <button
-          className="feed-card-delete-btn"
-          onClick={handle_delete}
-          disabled={deleting}
-        >
-          {deleting ? 'Excluindo...' : 'Excluir postagem'}
-        </button>
-      )}
+
+      <div className="feed-card-body">
+        <div className="feed-card-header">
+          <span className={`feed-badge feed-badge--${pet.category}`}>
+            {STATUS_LABEL[pet.category] ?? pet.category}
+          </span>
+          {pet.pet_type && <span className="feed-card-type">{pet.pet_type}</span>}
+        </div>
+        <h3 className="feed-card-name">{pet.pet_name || ' '}</h3>
+        {pet.description && (
+          <p className="feed-card-description">{pet.description}</p>
+        )}
+        {pet.date && (
+          <p className="feed-card-date">
+            {new Date(pet.date).toLocaleDateString('pt-BR')}
+          </p>
+        )}
+        {onDelete && (
+          <button
+            className="feed-card-delete-btn"
+            onClick={handle_delete}
+            disabled={deleting}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir postagem'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -99,14 +111,12 @@ export default function Feed() {
 
   async function handle_delete(petId) {
     try {
-      await api.delete(`/pets/${petId}`, {
-        data: { user_id: user.id }
-      });
+      await api.delete(`/me/posts/${petId}`);
 
       setMyPets((prev) => prev.filter((p) => p.id !== petId));
       setPets((prev) => prev.filter((p) => p.id !== petId));
     } catch (err) {
-      setMyPostsError(err.response?.data?.error || 'Erro ao excluir postagem');
+      setMyPostsError(err.response?.data?.message ?? err.response?.data?.error ?? 'Erro ao excluir postagem');
     }
   }
 
@@ -139,6 +149,9 @@ export default function Feed() {
           >
             Minhas postagens
           </button>
+          <button className="feed-nav-btn" onClick={() => navigate('/map')}>
+            Mapa
+          </button>
           <button className="feed-nav-btn" onClick={() => navigate('/create-post')}>
             Criar postagem
           </button>
@@ -164,7 +177,7 @@ export default function Feed() {
 
           <div className="feed-grid">
             {myPets.map((pet) => (
-              <PetCard key={pet.id} pet={pet} onDelete={handle_delete} />
+              <PetCard key={pet.id} pet={pet} onDelete={handle_delete} onOpen={() => navigate(`/posts/${pet.id}`)} />
             ))}
           </div>
         </main>
@@ -181,7 +194,7 @@ export default function Feed() {
 
           <div className="feed-grid">
             {pets.map((pet) => (
-              <PetCard key={pet.id} pet={pet} onDelete={null} />
+              <PetCard key={pet.id} pet={pet} onDelete={null} onOpen={() => navigate(`/posts/${pet.id}`)} />
             ))}
           </div>
         </main>

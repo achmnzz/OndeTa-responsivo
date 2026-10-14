@@ -8,7 +8,7 @@ def compress_image(file):
     if hasattr(file, 'seek'):
         file.seek(0)
     image = Image.open(file)
-    if image.mode in ("RGBA", "P"):
+    if image.mode != "RGB":
         image = image.convert("RGB")
 
     image.thumbnail(MAX_SIZE)

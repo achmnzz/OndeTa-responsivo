@@ -42,11 +42,13 @@ class PostUpdateSchema(Schema):
 
 class PinResponseSchema(Schema):
     id = fields.Int(dump_only=True)
+    pet_name = fields.Str()
     pet_type = fields.Str()
     category = fields.Str()
     status = fields.Str()
     latitude = fields.Float()
     longitude = fields.Float()
+    images = fields.Nested("ImageResponseSchema", many=True, dump_only=True)
 
 
 class PostResponseSchema(PinResponseSchema):

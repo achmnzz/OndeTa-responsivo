@@ -11,12 +11,14 @@ class PostRepository:
             return query.options(
                 load_only(
                     Post.id,
+                    Post.pet_name,
                     Post.pet_type,
                     Post.category,
                     Post.status,
                     Post.latitude,
                     Post.longitude
-                )
+                ),
+                joinedload(Post.images)
             )
         else:
             return query.options(joinedload(Post.images))
@@ -84,3 +86,8 @@ class PostRepository:
             setattr(post, key, value)
         db.session.commit()
         return post
+
+    @staticmethod
+    def delete(post):
+        db.session.delete(post)
+        db.session.commit()

@@ -1,6 +1,7 @@
 import math
 from app.repositories.post_repository import PostRepository
-from app.utils.exceptions import NotFoundError, DensityLimitError
+from app.services.storage_service import delete_image_storage
+from app.utils.exceptions import NotFoundError, DensityLimitError, ForbiddenError
 
 
 class PostService:
@@ -45,6 +46,21 @@ class PostService:
     @staticmethod
     def create_post(data, user_id):
         return PostRepository.create({**data, "user_id": user_id})
+
+    @staticmethod
+    def delete_post(post_id, user_id, is_admin=False):
+        post = PostRepository.get_post(post_id)
+
+        if not post:
+            raise NotFoundError("Post não encontrado.")
+
+        if not is_admin and post.user_id != user_id:
+            raise ForbiddenError("Você não tem permissão para excluir este post.")
+
+        for image in post.images:
+            delete_image_storage(image.filename)
+
+        PostRepository.delete(post)
 
     @staticmethod
     def get_post(post_id, user=None):
