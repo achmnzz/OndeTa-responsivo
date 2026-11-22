@@ -1,111 +1,92 @@
+/* ==========================================================================
+   Base global do OndeTá?
+   Vale para todas as páginas. O estilo de cada página fica no styles.css dela.
+   ========================================================================== */
+
+/* ---------- Cores e fontes do app (use com var(--nome)) ---------- */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Roxos (do mais escuro ao mais claro) */
+  --color-primary-dark: #362b52;   /* hover dos botões principais */
+  --color-primary: #4a3b6b;        /* botões principais, títulos */
+  --color-primary-medium: #5b4a8a; /* labels, textos de destaque */
+  --color-accent: #7b6bab;         /* subtítulos, textos secundários */
+  --color-border-strong: #9b8fd4;  /* borda de botões e campos em foco */
+  --color-border: #c4b8e8;         /* borda padrão de campos */
+  --color-muted: #b0a4cc;          /* placeholder, datas, "(opcional)" */
+  --color-bg: #ede9f8;             /* fundo das páginas */
+  --color-surface-hover: #f0ebff;  /* hover de botões claros */
+  --color-input-bg: #f9f7ff;       /* fundo dos campos */
+  --color-surface: #ffffff;        /* cards e cabeçalho */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Texto */
+  --color-text: #2e1f4f;           /* texto principal */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Verde (link "Cadastre-se") */
+  --color-link: #79c23a;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Estados */
+  --color-error: #c0392b;
+  --color-error-bg: #fdecea;
+  --color-error-border: #e8a0a0;
+  --color-success: #2e7d32;
+  --color-success-bg: #e8f5e9;
+
+  /* Fontes */
+  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-title: 'Baloo 2', var(--font-body);
+
+  /* O app só tem visual claro. Sem isso, no modo escuro do celular,
+     campos, select e barras de rolagem ficam escuros. */
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* ---------- Reset ---------- */
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* Largura e altura passam a incluir padding e borda.
+   Ex.: width: 100% + padding: 2rem continua cabendo em 100%. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Impede o iPhone de aumentar o texto sozinho ao girar a tela */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-body);
+  line-height: 1.45;
+  color: var(--color-text);
+  /* Mesma cor de fundo das páginas: aparece no "efeito elástico"
+     ao rolar além do fim da página no celular */
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-#root {
-  width: 1126px;
+/* Imagens nunca passam da largura de quem as contém */
+img {
+  display: block;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  height: auto;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Por padrão o navegador usa outra fonte (Arial no Windows) em
+   botões e campos; aqui eles passam a herdar a Nunito */
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
+/* Os parágrafos começam sem margem; cada página define a sua.
+   (O CSS antigo do template já fazia isso, e as páginas contam com isso.) */
 p {
   margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }
