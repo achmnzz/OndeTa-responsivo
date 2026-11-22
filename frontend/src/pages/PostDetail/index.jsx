@@ -56,9 +56,6 @@ export default function PostDetail() {
           <button className="post-detail-nav-btn" onClick={() => navigate('/feed', { state: { showMyPosts: true } })}>
             Minhas postagens
           </button>
-          <button className="post-detail-nav-btn" onClick={() => navigate('/map')}>
-            Mapa
-          </button>
           <button className="post-detail-nav-btn" onClick={() => navigate('/create-post')}>
             Criar postagem
           </button>

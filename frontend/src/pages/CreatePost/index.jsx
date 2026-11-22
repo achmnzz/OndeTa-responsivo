@@ -204,9 +204,6 @@ export default function CreatePost() {
           <button className="create-post-nav-btn" onClick={() => navigate('/feed', { state: { showMyPosts: true } })}>
             Minhas postagens
           </button>
-          <button className="create-post-nav-btn" onClick={() => navigate('/map')}>
-            Mapa
-          </button>
           <button className="create-post-nav-btn create-post-nav-btn--active">
             Criar postagem
           </button>

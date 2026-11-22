@@ -149,9 +149,6 @@ export default function Feed() {
           >
             Minhas postagens
           </button>
-          <button className="feed-nav-btn" onClick={() => navigate('/map')}>
-            Mapa
-          </button>
           <button className="feed-nav-btn" onClick={() => navigate('/create-post')}>
             Criar postagem
           </button>

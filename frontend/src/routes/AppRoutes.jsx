@@ -4,7 +4,6 @@ import Register from '../pages/Register';
 import Profile from '../pages/Profile';
 import Feed from '../pages/Feed';
 import CreatePost from '../pages/CreatePost';
-import MapPage from '../pages/Map';
 import PostDetail from '../pages/PostDetail';
 
 export default function AppRoutes() {
@@ -16,7 +15,6 @@ export default function AppRoutes() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/feed" element={<Feed />} />
       <Route path="/create-post" element={<CreatePost />} />
-      <Route path="/map" element={<MapPage />} />
       <Route path="/posts/:id" element={<PostDetail />} />
     </Routes>
   );
