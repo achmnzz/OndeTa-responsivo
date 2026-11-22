@@ -12,7 +12,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, resources={r"/*": {"origins": ["https://karlsen16.github.io", "http://localhost:5173"]}})
+    CORS(app, resources={r"/*": {"origins": ["https://achmnzz.github.io", "http://localhost:5173"]}})
 
     db.init_app(app)
     bcrypt.init_app(app)

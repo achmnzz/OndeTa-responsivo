@@ -4,7 +4,7 @@ import AppRoutes from './routes/AppRoutes';
 
 export default function App() {
   return (
-    <BrowserRouter basename="/OndeTa">
+    <BrowserRouter basename="/OndeTa-responsivo">
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
