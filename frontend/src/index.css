@@ -1,49 +1,38 @@
-/* ==========================================================================
-   Base global do OndeTá?
-   Vale para todas as páginas. O estilo de cada página fica no styles.css dela.
-   ========================================================================== */
-
-/* ---------- Cores e fontes do app (use com var(--nome)) ---------- */
 :root {
-  /* Roxos (do mais escuro ao mais claro) */
-  --color-primary-dark: #362b52;   /* hover dos botões principais */
-  --color-primary: #4a3b6b;        /* botões principais, títulos */
-  --color-primary-medium: #5b4a8a; /* labels, textos de destaque */
-  --color-accent: #7b6bab;         /* subtítulos, textos secundários */
-  --color-border-strong: #9b8fd4;  /* borda de botões e campos em foco */
-  --color-border: #c4b8e8;         /* borda padrão de campos */
-  --color-muted: #b0a4cc;          /* placeholder, datas, "(opcional)" */
-  --color-bg: #ede9f8;             /* fundo das páginas */
-  --color-surface-hover: #f0ebff;  /* hover de botões claros */
-  --color-input-bg: #f9f7ff;       /* fundo dos campos */
-  --color-surface: #ffffff;        /* cards e cabeçalho */
+  --color-primary-dark: #362b52;
+  --color-primary: #4a3b6b;
+  --color-primary-medium: #5b4a8a;
+  --color-accent: #7b6bab;
+  --color-border-strong: #9b8fd4;
+  --color-border: #c4b8e8;
+  --color-muted: #b0a4cc;
+  --color-bg: #ede9f8;
+  --color-surface-hover: #f0ebff;
+  --color-input-bg: #f9f7ff;
+  --color-surface: #ffffff;
 
-  /* Texto */
-  --color-text: #2e1f4f;           /* texto principal */
+  --color-text: #2e1f4f;
 
-  /* Verde (link "Cadastre-se") */
   --color-link: #79c23a;
 
-  /* Estados */
   --color-error: #c0392b;
   --color-error-bg: #fdecea;
   --color-error-border: #e8a0a0;
   --color-success: #2e7d32;
   --color-success-bg: #e8f5e9;
 
-  /* Fontes */
   --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-title: 'Baloo 2', var(--font-body);
 
-  /* O app só tem visual claro. Sem isso, no modo escuro do celular,
-     campos, select e barras de rolagem ficam escuros. */
+  --touch-target: 44px;
+
+  --bottom-nav-height: 64px;
+
   color-scheme: light;
 }
 
-/* ---------- Reset ---------- */
 
-/* Largura e altura passam a incluir padding e borda.
-   Ex.: width: 100% + padding: 2rem continua cabendo em 100%. */
+
 *,
 *::before,
 *::after {
@@ -51,7 +40,6 @@
 }
 
 html {
-  /* Impede o iPhone de aumentar o texto sozinho ao girar a tela */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -61,23 +49,18 @@ body {
   font-family: var(--font-body);
   line-height: 1.45;
   color: var(--color-text);
-  /* Mesma cor de fundo das páginas: aparece no "efeito elástico"
-     ao rolar além do fim da página no celular */
   background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* Imagens nunca passam da largura de quem as contém */
 img {
   display: block;
   max-width: 100%;
   height: auto;
 }
 
-/* Por padrão o navegador usa outra fonte (Arial no Windows) em
-   botões e campos; aqui eles passam a herdar a Nunito */
 button,
 input,
 select,
@@ -85,8 +68,42 @@ textarea {
   font: inherit;
 }
 
-/* Os parágrafos começam sem margem; cada página define a sua.
-   (O CSS antigo do template já fazia isso, e as páginas contam com isso.) */
 p {
   margin: 0;
+}
+
+
+button,
+a,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button:not(:disabled),
+[role='button'] {
+  cursor: pointer;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+
+:focus-visible {
+  outline: 3px solid var(--color-border-strong);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+
+  button:not(:disabled):active {
+    transform: none;
+  }
 }

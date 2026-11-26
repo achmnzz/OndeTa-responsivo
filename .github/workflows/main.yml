@@ -27,6 +27,9 @@ jobs:
       - name: Build
         run: cd frontend && echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env.production && npm run build
 
+      - name: Fallback de rotas (SPA) para o GitHub Pages
+        run: cp frontend/dist/index.html frontend/dist/404.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

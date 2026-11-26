@@ -22,11 +22,6 @@ class APIError(Exception):
         return rv
 
 
-class DensityLimitError(APIError):
-    code = 400
-    description = "Excedeu o limite ou restrições na requisição"
-
-
 class UnauthorizedError(APIError):
     code = 401
     description = "Acesso negado. Credenciais inválidas."

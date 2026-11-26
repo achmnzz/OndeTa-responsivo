@@ -1,17 +1,22 @@
 .register-container {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ede9f8;
-  padding: 1rem;
+  background-color: var(--color-bg);
+  padding:
+    calc(1rem + env(safe-area-inset-top))
+    calc(1rem + env(safe-area-inset-right))
+    calc(1rem + env(safe-area-inset-bottom))
+    calc(1rem + env(safe-area-inset-left));
 }
 
 .register-card {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 16px;
   box-shadow: 0 4px 24px rgba(91, 74, 138, 0.15);
-  padding: 2.5rem 2rem;
+  padding: 1.75rem 1.25rem;
   width: 100%;
   max-width: 400px;
   display: flex;
@@ -20,23 +25,24 @@
 }
 
 .register-logo {
-  width: 220px;
+  width: min(200px, 60%);
+  height: auto;
   margin-bottom: 0.5rem;
 }
 
 .register-subtitle {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: var(--font-title);
   font-weight: 700;
   font-size: 0.95rem;
-  color: #7b6bab;
-  margin: 0 0 2rem;
+  color: var(--color-accent);
+  margin: 0 0 1.5rem;
 }
 
 .register-form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.1rem;
 }
 
 .register-field {
@@ -48,60 +54,75 @@
 .register-field label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #5b4a8a;
+  color: var(--color-primary-medium);
 }
 
 .register-optional {
   font-weight: 400;
   font-size: 0.8rem;
-  color: #b0a4cc;
+  color: var(--color-muted);
 }
 
 .register-field input {
+  width: 100%;
+  min-height: var(--touch-target);
   padding: 0.65rem 0.875rem;
-  border: 1.5px solid #c4b8e8;
+  border: 1.5px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
   outline: none;
-  background-color: #f9f7ff;
-  color: #2e1f4f;
-  -webkit-text-fill-color: #2e1f4f;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  -webkit-text-fill-color: var(--color-text);
 }
 
 .register-field input::placeholder {
-  color: #b0a4cc;
-  -webkit-text-fill-color: #b0a4cc;
+  color: var(--color-muted);
+  -webkit-text-fill-color: var(--color-muted);
 }
 
 .register-field input:focus {
-  border-color: #9b8fd4;
+  border-color: var(--color-border-strong);
   background-color: #ffffff;
+}
+
+.register-field input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.register-field-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-error);
 }
 
 .register-error {
   font-size: 0.875rem;
-  color: #c0392b;
-  background-color: #fdecea;
+  color: var(--color-error);
+  background-color: var(--color-error-bg);
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   margin: 0;
 }
 
+.register-slow-hint {
+  font-size: 0.85rem;
+  color: var(--color-accent);
+  text-align: center;
+  margin: 0;
+}
+
 .register-btn {
+  min-height: 48px;
   padding: 0.75rem;
-  background-color: #4a3b6b;
+  background-color: var(--color-primary);
   color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
   transition: background-color 0.2s, opacity 0.2s;
-}
-
-.register-btn:hover:not(:disabled) {
-  background-color: #362b52;
 }
 
 .register-btn:disabled {
@@ -112,16 +133,42 @@
 .register-link {
   text-align: center;
   font-size: 0.875rem;
-  color: #5b4a8a;
-  margin: 1.5rem 0 0;
+  color: var(--color-primary-medium);
+  margin: 1rem 0 0;
 }
 
 .register-link a {
-  color: #79c23a;
-  font-weight: 600;
+  display: inline-block;
+  padding: 0.75rem 0.25rem;
+  color: var(--color-link);
+  font-weight: 700;
   text-decoration: none;
 }
 
-.register-link a:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .register-btn:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+  }
+
+  .register-link a:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (min-width: 600px) {
+  .register-card {
+    padding: 2.5rem 2rem;
+  }
+
+  .register-logo {
+    width: 220px;
+  }
+
+  .register-subtitle {
+    margin-bottom: 2rem;
+  }
+
+  .register-form {
+    gap: 1.25rem;
+  }
 }

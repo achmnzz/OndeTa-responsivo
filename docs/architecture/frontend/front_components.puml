@@ -8,23 +8,35 @@ package "Front-end (React)" {
         [Login]
         [Cadastro]
         [Feed]
+        [DetalhePost]
         [CriarPost]
         [Perfil]
     }
 
     package "Components" {
         [Navbar]
-        [PetCard]
-        [MapView]
-        [UploadImage]
+        [LocationPicker]
     }
 
-    [Feed] --> [PetCard]
-    [Feed] --> [MapView]
-    [CriarPost] --> [UploadImage]
+    package "Services" {
+        [API Service]
+        [Geocoding Service]
+    }
+
+    [Feed] --> [Navbar]
+    [DetalhePost] --> [Navbar]
+    [CriarPost] --> [Navbar]
+    [Perfil] --> [Navbar]
+
+    [CriarPost] --> [LocationPicker]
+    [LocationPicker] --> [Geocoding Service]
+    [DetalhePost] --> [Geocoding Service]
 
     [App] --> [API Service]
 
 }
+
+cloud "Nominatim (OpenStreetMap)" as Nominatim
+[Geocoding Service] --> Nominatim
 
 @enduml

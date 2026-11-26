@@ -58,16 +58,20 @@ class PostRepository:
         lng = params.get("longitude")
         distance_limit = params.get("distance")
 
-        haversine_distance = (
-                6371 * func.acos(
-            func.cos(func.radians(lat)) * func.cos(func.radians(Post.latitude)) * func.cos(
-                func.radians(Post.longitude) - func.radians(lng)) +
-            func.sin(func.radians(lat)) * func.sin(func.radians(Post.latitude))
+        if lat is not None and lng is not None:
+            haversine_distance = (
+                    6371 * func.acos(
+                func.cos(func.radians(lat)) * func.cos(func.radians(Post.latitude)) * func.cos(
+                    func.radians(Post.longitude) - func.radians(lng)) +
+                func.sin(func.radians(lat)) * func.sin(func.radians(Post.latitude))
+                )
             )
-        )
 
-        query = query.filter(haversine_distance <= distance_limit)
-        query = query.order_by(haversine_distance.asc(), Post.created_at.desc())
+            query = query.filter(haversine_distance <= distance_limit)
+            query = query.order_by(haversine_distance.asc(), Post.created_at.desc())
+        else:
+            query = query.order_by(Post.created_at.desc(), Post.id.desc())
+
         total_posts = query.count()
 
         limit = params.get("limit")
@@ -79,6 +83,13 @@ class PostRepository:
             posts = query.limit(limit).all()
 
         return total_posts, posts
+
+    @staticmethod
+    def get_by_user(user_id):
+        query = db.session.query(Post)
+        query = PostRepository._apply_query_options(query, lean=False)
+        query = query.filter(Post.user_id == user_id)
+        return query.order_by(Post.created_at.desc(), Post.id.desc()).all()
 
     @staticmethod
     def update(post, data):

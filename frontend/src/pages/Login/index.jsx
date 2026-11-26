@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import logo from '../../assets/Logo-ondeta-v1.png';
+import { useSlowHint, SLOW_SERVER_MESSAGE } from '../../hooks/useSlowHint';
+import logo from '../../assets/logo-ondeta.webp';
 import './styles.css';
 
 export default function Login() {
@@ -9,31 +10,47 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [accountInactive, setAccountInactive] = useState(false);
+  const slow = useSlowHint(loading);
+
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get('sessao') === 'expirada';
 
   const { login: authLogin } = useAuth();
-  const navigate = useNavigate();
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function do_login({ reactivate = false } = {}) {
     setError('');
+    setAccountInactive(false);
     setLoading(true);
 
     try {
-      await authLogin(email, password);
-      navigate('/feed');
+      await authLogin(email.trim(), password, { reactivate });
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message || 'Erro ao realizar login';
-      setError(errorMessage);
-    } finally {
+      if (err.accountInactive) {
+        setAccountInactive(true);
+      } else {
+        setError(err.message || 'Erro ao realizar login');
+      }
       setLoading(false);
     }
   }
 
+  function handleSubmit(e) {
+    e.preventDefault();
+    do_login();
+  }
+
   return (
     <div className="login-container">
-      <div className="login-card">
-        <img src={logo} alt="OndeTá?" className="login-logo" />
-        <p className="login-subtitle">Encontre seu pet perdido</p>
+      <main className="login-card">
+        <img src={logo} alt="OndeTá?" className="login-logo" width="480" height="334" />
+        <h1 className="login-subtitle">Encontre seu pet perdido</h1>
+
+        {sessionExpired && !error && (
+          <p className="login-info" role="status">
+            Sua sessão expirou. Entre novamente para continuar.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-field">
@@ -41,11 +58,16 @@ export default function Login() {
             <input
               id="email"
               type="email"
+              inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               required
               autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
             />
           </div>
 
@@ -59,21 +81,42 @@ export default function Login() {
               placeholder="••••••••"
               required
               autoComplete="current-password"
+              enterKeyHint="go"
             />
           </div>
 
-          {error && <p className="login-error">{error}</p>}
+          {error && <p className="login-error" role="alert">{error}</p>}
+
+          {accountInactive && (
+            <div className="login-inactive" role="alert">
+              <p>Esta conta foi excluída. Deseja reativá-la e entrar?</p>
+              <button
+                type="button"
+                className="login-reactivate-btn"
+                onClick={() => do_login({ reactivate: true })}
+                disabled={loading}
+              >
+                Reativar conta
+              </button>
+            </div>
+          )}
 
           <button type="submit" className="login-btn" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
+
+          {slow && <p className="login-slow-hint" role="status">{SLOW_SERVER_MESSAGE}</p>}
         </form>
 
         <p className="login-register">
           Não tem conta?{' '}
           <Link to="/register">Cadastre-se</Link>
         </p>
-      </div>
+
+        <p className="login-register login-guest">
+          <Link to="/feed">Ver os relatos sem entrar</Link>
+        </p>
+      </main>
     </div>
   );
 }

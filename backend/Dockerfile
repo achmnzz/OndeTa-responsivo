@@ -1,5 +1,5 @@
 #Para gerar a build: docker build --no-cache -t flask-app .
-#Para rodar o docker: docker run -p 5000:5000 flask-app
+# Para rodar o docker: docker run -p 5000:5000 flask-app
 FROM python:3.10-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
