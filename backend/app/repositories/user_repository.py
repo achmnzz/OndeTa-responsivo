@@ -1,5 +1,6 @@
 from app.extensions import db
 from app.models import User
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload, load_only
 
 
@@ -36,39 +37,11 @@ class UserRepository:
         if user_id is not None:
             query = query.filter(User.id == user_id)
         elif email is not None:
-            query = query.filter(User.email == email)
+            query = query.filter(func.lower(User.email) == email.strip().lower())
         else:
             return None
 
         return query.first()
-
-    @staticmethod
-    def get_feed(params, include_assets=False, lean=False):
-        query = db.session.query(User)
-
-        query = UserRepository._apply_query_options(query, include_assets, lean)
-
-        if params.get("status"):
-            query = query.filter(User.status == params["status"])
-
-        if params.get("role"):
-            query = query.filter(User.role == params["role"])
-
-        order = params.get("order", None)
-        if order == "newest":
-            query = query.order_by(User.created_at.desc())
-        elif order == "oldest":
-            query = query.order_by(User.created_at.asc())
-        else:
-            query = query.order_by(User.updated_at.desc())
-        total_users = query.count()
-
-        limit = params.get("limit")
-        page = params.get("page")
-        offset = (page - 1) * limit
-        users = query.offset(offset).limit(limit).all()
-
-        return total_users, users
 
     @staticmethod
     def update(user, data):

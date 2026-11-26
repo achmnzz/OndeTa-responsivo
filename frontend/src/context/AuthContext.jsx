@@ -1,43 +1,38 @@
-import { createContext, useState, useEffect } from 'react';
-import api from '../services/api';
-
-export const AuthContext = createContext(null);
+import { useState } from 'react';
+import api, { STORAGE_KEY, getStoredSession } from '../services/api';
+import { getErrorMessage } from '../services/apiErrors';
+import { AuthContext } from './auth-context';
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => getStoredSession()?.user ?? null);
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('@App:user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser).user);
-    }
-    setLoading(false);
-  }, []);
-
-  async function login(email, password) {
+  async function login(email, password, { reactivate = false } = {}) {
     try {
-
-      const response = await api.post('/auth/login', { email, password });
+      const endpoint = reactivate ? '/auth/reactivate' : '/auth/login';
+      const response = await api.post(endpoint, { email, password });
       const data = response.data;
 
       setUser(data.user);
-      localStorage.setItem('@App:user', JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
       return data;
     } catch (error) {
-      const message = error.response?.data?.error ?? 'Erro ao fazer login';
-      throw new Error(message);
+      const err = new Error(getErrorMessage(error, 'Erro ao fazer login'), { cause: error });
+      err.accountInactive =
+        !reactivate &&
+        error.response?.status === 409 &&
+        String(error.response?.data?.message ?? '').includes('inactive');
+      throw err;
     }
   }
 
   function logout() {
     setUser(null);
-    localStorage.removeItem('@App:user');
+    localStorage.removeItem(STORAGE_KEY);
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

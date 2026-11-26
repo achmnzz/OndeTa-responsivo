@@ -1,85 +1,40 @@
 .post-detail-container {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background-color: #ede9f8;
-}
-
-.post-detail-header {
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(91, 74, 138, 0.12);
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.post-detail-logo {
-  width: 130px;
-}
-
-.post-detail-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.post-detail-nav-btn {
-  background: none;
-  border: 1.5px solid #9b8fd4;
-  border-radius: 8px;
-  color: #5b4a8a;
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.4rem 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.post-detail-nav-btn:hover {
-  background-color: #f0ebff;
-}
-
-.post-detail-logout-btn {
-  background: none;
-  border: 1.5px solid #c4b8e8;
-  border-radius: 8px;
-  color: #7b6bab;
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.4rem 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.post-detail-logout-btn:hover {
-  background-color: #f0ebff;
+  background-color: var(--color-bg);
 }
 
 .post-detail-main {
   flex: 1;
-  padding: 2rem 1.5rem;
-  max-width: 720px;
   width: 100%;
+  max-width: 720px;
   margin: 0 auto;
-  box-sizing: border-box;
+  padding:
+    1rem
+    calc(1rem + env(safe-area-inset-right))
+    2rem
+    calc(1rem + env(safe-area-inset-left));
 }
 
 .post-detail-back-btn {
-  background: none;
-  border: 1.5px solid #9b8fd4;
+  position: sticky;
+  top: calc(var(--navbar-height, 62px) + 1rem);
+  z-index: 50;
+  display: block;
+  width: fit-content;
+  min-height: var(--touch-target);
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(91, 74, 138, 0.15);
+  border: 1.5px solid var(--color-border-strong);
   border-radius: 8px;
-  color: #5b4a8a;
+  color: var(--color-primary-medium);
   font-size: 0.875rem;
   font-weight: 600;
-  padding: 0.4rem 0.875rem;
-  cursor: pointer;
-  margin-bottom: 1.5rem;
   transition: background-color 0.2s;
-}
-
-.post-detail-back-btn:hover {
-  background-color: #f0ebff;
 }
 
 .post-detail-loading,
@@ -89,15 +44,27 @@
   margin-top: 2rem;
 }
 
+.post-detail-loading {
+  color: var(--color-accent);
+}
+
+.post-detail-slow-hint {
+  display: block;
+  max-width: 32ch;
+  margin: 0.5rem auto 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
 .post-detail-error {
-  color: #c0392b;
-  background-color: #fdecea;
+  color: var(--color-error);
+  background-color: var(--color-error-bg);
   border-radius: 6px;
   padding: 0.75rem;
 }
 
 .post-detail-card {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 16px;
   box-shadow: 0 4px 24px rgba(91, 74, 138, 0.15);
   overflow: hidden;
@@ -107,29 +74,30 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background-color: #ede9f8;
+  background-color: var(--color-bg);
 }
 
 .post-detail-gallery img {
   width: 100%;
-  max-height: 420px;
+  max-height: min(420px, 60vh);
+  max-height: min(420px, 60dvh);
   object-fit: cover;
   display: block;
 }
 
 .post-detail-photo-placeholder {
   width: 100%;
-  height: 220px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ede9f8;
+  background-color: var(--color-bg);
   font-size: 4rem;
   opacity: 0.35;
 }
 
 .post-detail-info {
-  padding: 1.75rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -152,59 +120,221 @@
 }
 
 .post-detail-badge--perdido {
-  background-color: #fdecea;
-  color: #c0392b;
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
 }
 
 .post-detail-badge--encontrado {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .post-detail-type {
   font-size: 0.8rem;
-  color: #7b6bab;
-  background-color: #f0ebff;
+  color: var(--color-accent);
+  background-color: var(--color-surface-hover);
   border-radius: 20px;
   padding: 0.25rem 0.7rem;
+  text-transform: capitalize;
 }
 
 .post-detail-name {
-  font-family: 'Baloo 2', sans-serif;
-  font-size: 1.5rem;
-  color: #2e1f4f;
+  font-family: var(--font-title);
+  font-size: 1.375rem;
+  line-height: 1.2;
+  color: var(--color-text);
   margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
 }
 
 .post-detail-description {
   font-size: 1rem;
-  color: #5b4a8a;
+  color: var(--color-primary-medium);
   line-height: 1.6;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.post-detail-date {
+  font-size: 0.875rem;
+  color: var(--color-muted);
   margin: 0;
 }
 
-.post-detail-date,
 .post-detail-location {
-  font-size: 0.875rem;
-  color: #b0a4cc;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  line-height: 1.45;
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-detail-location-label {
+  font-weight: 700;
+  color: var(--color-primary-medium);
+}
+
+.post-detail-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border-radius: 8px;
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.post-detail-notice p {
+  flex: 1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-detail-notice-close {
+  flex-shrink: 0;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}
+
+.post-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.post-detail-edit-btn {
+  min-height: var(--touch-target);
+  padding: 0 1rem;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 8px;
+  background: none;
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
 }
 
 .post-detail-author {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #ede9f8;
+  border-top: 1px solid var(--color-bg);
 }
 
 .post-detail-author h2 {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #4a3b6b;
+  color: var(--color-primary);
   margin: 0 0 0.5rem;
 }
 
-.post-detail-author p {
+.post-detail-author-name {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  margin: 0 0 0.75rem;
+}
+
+.post-detail-contact-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.post-detail-contact-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-primary);
   font-size: 0.9rem;
-  color: #2e1f4f;
-  margin: 0.15rem 0;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: background-color 0.2s;
+}
+
+.post-detail-contact-btn--whatsapp {
+  border-color: #25d366;
+  color: #128c4a;
+}
+
+.post-detail-share-btn {
+  min-height: var(--touch-target);
+  padding: 0 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.post-detail-share-feedback {
+  font-size: 0.85rem;
+  color: var(--color-success);
+  text-align: center;
+  margin: 0;
+}
+
+.post-detail-contact-btn:active {
+  background-color: var(--color-surface-hover);
+}
+
+@media (hover: hover) {
+  .post-detail-back-btn:hover,
+  .post-detail-contact-btn:hover,
+  .post-detail-edit-btn:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  .post-detail-share-btn:hover {
+    background-color: var(--color-primary-dark);
+  }
+}
+
+@media (min-width: 600px) {
+  .post-detail-main {
+    padding-top: 2rem;
+    padding-left: calc(1.5rem + env(safe-area-inset-left));
+    padding-right: calc(1.5rem + env(safe-area-inset-right));
+  }
+
+  .post-detail-back-btn {
+    top: calc(var(--navbar-height, 62px) + 2rem);
+  }
+
+  .post-detail-info {
+    padding: 1.75rem;
+  }
+
+  .post-detail-name {
+    font-size: 1.5rem;
+  }
+
+  .post-detail-photo-placeholder {
+    height: 220px;
+  }
+
+  .post-detail-contact-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .post-detail-actions {
+    flex-direction: row;
+  }
 }

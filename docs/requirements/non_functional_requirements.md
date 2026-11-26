@@ -16,7 +16,7 @@
 
 - **[RNF06] Expiração de Acesso:** Os tokens JWT devem expirar em `24 horas`.
 
-- **[RNF07] Controle de Acesso (RBAC):** O sistema deve verificar privilégios (`role`) para acesso às funcionalidades administrativas.
+- **[RNF07] Controle de Acesso (RBAC):** O sistema deve verificar privilégios (`role`) para acesso às funcionalidades administrativas. Na versão responsiva não há funcionalidades administrativas; a verificação de papel continua no código de autenticação.
 
 ---
 
@@ -50,4 +50,4 @@
 
 # 6. Renderização Geográfica
 
-- **[RNF16] Controle de Volume Geográfico:** O sistema deve limitar a quantidade de registros geográficos retornados por consulta para preservar o desempenho de renderização do cliente.
+- **[RNF16] Controle de Volume Geográfico:** O sistema deve limitar a quantidade de registros geográficos retornados por consulta para preservar o desempenho de renderização do cliente. **Fora do escopo da versão responsiva:** a regra valia para os pins do mapa, que foi retirado junto com a rota `/posts/pins`.

@@ -1,6 +1,8 @@
-# OndeTa?  🐾 - Sistema Colaborativo de Localização de Pets
+# OndeTá?  🐾
 
-O **OndeTa?** é uma plataforma completa projetada para conectar comunidades em prol do resgate e localização de animais perdidos. Através de um feed interativo e geolocalização em tempo real, transformamos a busca por um pet em um esforço coletivo.
+O **OndeTá?** é uma plataforma projetada para conectar pessoas em prol do resgate e localização de animais perdidos (através de um feed interativo e geolocalização em tempo real). Este repositório é a versão responsiva do OndeTá?, feita para a disciplina de Programação para Dispositivos Móveis e Sem Fio. O foco é o uso no celular, com três funcionalidades: cadastro e login, publicação de relatos e feed de postagens. 
+>
+> Site publicado: https://achmnzz.github.io/OndeTa-responsivo/
 
 <br />
 
@@ -14,38 +16,10 @@ O **OndeTa?** é uma plataforma completa projetada para conectar comunidades em 
 
 ### **Front-end (Web)**
 * **Framework:** React + Vite
-* **Estilização:** CSS Modules
+* **Estilização:** CSS puro, mobile-first (um arquivo de estilo por tela/componente)
 * **Estado Global:** Context API
+* **Endereços:** Nominatim (OpenStreetMap), para converter localização em endereço
 
-<br />
-
-## Arquitetura do Sistema
-
-O projeto utiliza uma arquitetura **Cliente-Servidor** modular e desacoplada. A comunicação entre o ecossistema de frontends (Web/Mobile) e o servidor ocorre via **API REST**.
-
-<details><summary><strong>Diagrama da Arquitetura</strong></summary>
-
-```mermaid
-architecture-beta
-    group client(cloud)["Camada de Cliente (GitHub Pages)"]
-    group server(server)["Camada de Servidor (Render)"]
-    group infra(database)["Infraestrutura (Supabase)"]
-
-    service fe(internet)[Frontend React] in client
-    service map(internet)[API Mapas] in client
-
-    service be(server)[Backend Flask API] in server
-
-    service db(database)[PostgreSQL] in infra
-    service img(disk)[Storage Buckets] in infra
-
-    fe:R -- L:map
-    fe:B -- T:be
-    be:R -- L:db
-    be:B -- T:img
-```
-A solução adota uma infraestrutura totalmente baseada em nuvem e distribuída, utilizando GitHub Pages para a entrega do artefato de front-end, Render como plataforma de execução para a API em Python/Flask, e o ecossistema Supabase para a persistência poliglota (dados relacionais no PostgreSQL e objetos binários nos Buckets).
-</details>
 <br />
 
 ##  Estrutura do Projeto
@@ -64,48 +38,51 @@ OndeTa/
 
 ```bash
 frontend/
-├── public/
+├── public/              # manifesto web e ícones (tela inicial do celular)
 ├── src/
-│   ├── assets/          # imagens, ícones
+│   ├── assets/          # logotipo (WebP)
 │   ├── components/      # componentes reutilizáveis
-│   │   ├── Navbar/
-│   │   ├── PetCard/     # exemplo de componente
+│   │   ├── LocationPicker/  # escolha do local (GPS ou endereço digitado)
 │   │   │   ├── index.jsx
-│   │   │   ├── styles.css
-│   │   │   └── iPetCard.test.js (opcional)
-│   │   ├── MapView/
-│   │   └── ImageUpload/
+│   │   │   └── styles.css
+│   │   └── Navbar/          # cabeçalho + barra de abas inferior no celular
+│   │       ├── index.jsx
+│   │       └── styles.css
 │   │
-│   ├── pages/           # páginas da aplicação
+│   ├── pages/           # páginas da aplicação (index.jsx + styles.css)
 │   │   ├── Login/
 │   │   ├── Register/
-│   │   ├── Feed/
-│   │   ├── CreatePost/
+│   │   ├── Feed/        # feed e "Minhas postagens"
+│   │   ├── CreatePost/  # criar e editar postagem
+│   │   ├── PostDetail/
 │   │   └── Profile/
 │   │
 │   ├── hooks/           # lógica reutilizável
 │   │   ├── useAuth.js
-│   │   ├── usePets.js
-│   │   └── useMap.js
+│   │   └── useSlowHint.js   # aviso de servidor "acordando"
 │   │
-│   ├── context/         # estado global
-│   │   └── AuthContext.jsx
+│   ├── context/         # estado global (sessão)
+│   │   ├── AuthContext.jsx
+│   │   └── auth-context.js
 │   │
-│   ├── services/        # comunicação com API
-│   │   └── api.js
+│   ├── services/        # comunicação com APIs
+│   │   ├── api.js           # API do OndeTa? (axios)
+│   │   ├── apiErrors.js     # mensagens de erro
+│   │   └── geocoding.js     # Nominatim: endereço <-> coordenadas
 │   │
 │   ├── utils/           # helpers
-│   │   ├── formatDate.js
-│   │   └── geoUtils.js
+│   │   └── compressImage.js # compressão de fotos antes do envio
 │   │
 │   ├── routes/          # configuração de rotas
 │   │   └── AppRoutes.jsx
 │   │
+│   ├── index.css        # base global (variáveis, toque, foco)
 │   ├── App.jsx
 │   └── main.jsx
 │
+├── index.html
 ├── package.json
-└── vite.config.js (ou webpack)
+└── vite.config.js
 ```
 </details>
 
@@ -133,7 +110,7 @@ backend/
 │   └── extensions.py        # db, jwt, etc
 │
 ├── migrations/              # alembic
-├── tests/
+├── Dockerfile               # imagem usada no Render
 ├── run.py
 ├── requirements.txt
 └── .env
@@ -141,67 +118,25 @@ backend/
 </details>
 <br />
 
-## Convenções e Boas Práticas
-
-### **Idiomas e Nomenclaturas**
-* **Código (variáveis, arquivos, pastas):** Inglês
-* **Documentação e Comentários:** Português
-* **Estilos:** `PascalCase` (Componentes), `snake_case` (funções/DB)
-
-### **Padrão de Commits**
-* `feat:` Nova funcionalidade ou recurso.
-* `fix:` Correção de algum erro ou bug.
-* `docs:` Alterações em documentações (como este README).
-* `refactor:` Melhorias no código que não alteram a funcionalidade final.
-* `style:` Mudanças visual/estética (CSS) ou formatação de código.
-
-<br />
-
-## Regras Gerais do Projeto 
-
-1. **Padrão REST:** Utilizar substantivos no plural e os métodos HTTP corretos (`GET`, `POST`, `PUT`, `DELETE`).
-2. **Responsabilidade Única (SRP):** Cada arquivo, classe ou função deve ser responsável por apenas uma funcionalidade.
-3. **Segurança:** O arquivo `.env` contém credenciais sensíveis e **nunca** deve ser enviado ao repositório (verifique o `.gitignore`).
-4. **Tratamento de Erros:** 
-   * No **Backend**: Utilizar blocos `try/except` para capturar exceções e retornar status codes apropriados.
-   * No **Frontend**: Validar os retornos da API e exibir mensagens amigáveis ao usuário.
-
-<br />
-
 ## Como Executar
 
 ### **Backend**
 ```bash
-# Entre na pasta do backend
 cd backend
 
-# Instale as dependências
 pip install -r requirements.txt
 
-# Execute a aplicação
 python run.py
 ```
 ### **Frontend**
 ```bash
-# Entre na pasta do frontend
 cd frontend
 
-# Instale as dependências (necessário apenas na primeira vez)
 npm install
 
-# Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
 <br />
 
 ---
-
-<div align="center">
-  <p><strong>Desenvolvido por:</strong></p>
-  <p>
-    <strong>Ariane Chiminazzo</strong> — <a href="mailto:arianecrmnc@gmail.com">arianecrmnc@gmail.com</a><br />
-    <strong>Lucas Schuchardt</strong> — <a href="mailto:l.rdt@pm.me">l.rdt@pm.me</a><br />
-  </p>
-  <p><strong>Versão:</strong> 2.0 | <strong>Última atualização:</strong> 06/05/2026</p>
-</div>

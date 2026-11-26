@@ -1,7 +1,7 @@
 import math
 from app.repositories.post_repository import PostRepository
 from app.services.storage_service import delete_image_storage
-from app.utils.exceptions import NotFoundError, DensityLimitError, ForbiddenError
+from app.utils.exceptions import NotFoundError, ForbiddenError
 
 
 class PostService:
@@ -34,18 +34,24 @@ class PostService:
         return pagination_metadata, posts
 
     @staticmethod
-    def get_pins(params):
-        params = PostService._prepare_allowed_statuses(params)
-        total_pins, pins = PostRepository.get_feed(params, lean=True)
-
-        if total_pins > 200:
-            raise DensityLimitError("Limite de pins atingido.")
-
-        return pins
-
-    @staticmethod
     def create_post(data, user_id):
         return PostRepository.create({**data, "user_id": user_id})
+
+    @staticmethod
+    def get_user_posts(user_id):
+        return PostRepository.get_by_user(user_id)
+
+    @staticmethod
+    def update_post(post_id, user_id, data):
+        post = PostRepository.get_post(post_id)
+
+        if not post or post.status == "blocked":
+            raise NotFoundError("Post não encontrado.")
+
+        if post.user_id != user_id:
+            raise ForbiddenError("Você não tem permissão para editar este post.")
+
+        return PostRepository.update(post, data)
 
     @staticmethod
     def delete_post(post_id, user_id, is_admin=False):

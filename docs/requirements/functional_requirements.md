@@ -1,3 +1,5 @@
+> **Versão responsiva:** esta versão cobre cadastro e login, publicação de relatos e feed de postagens. A visualização em mapa, a moderação (administrador) e a edição dos dados do perfil foram retiradas; os requisitos correspondentes estão listados na seção 4 (Fora do escopo da versão responsiva).
+
 # 1. Estados do Domínio
 
 Esta seção define os estados possíveis das principais entidades do sistema. Esses estados são utilizados pelas regras de negócio, requisitos funcionais e mecanismos de autorização.
@@ -21,7 +23,7 @@ Esta seção define os estados possíveis das principais entidades do sistema. E
 
 ## Observações
 
-- **Postagens Públicas:** Possuem status `active` ou `resolved`. Elas são as únicas visíveis no feed, mapa e resultados de busca para qualquer tipo de ator (incluindo visitantes).
+- **Postagens Públicas:** Possuem status `active` ou `resolved`. Elas são as únicas visíveis no feed, na página de detalhes e nos resultados de busca para qualquer tipo de ator (incluindo visitantes).
 - **Informações do Pet:** nome do pet, tipo de pet (`cachorro` ou `gato`), categoria (`perdido` ou `encontrado`) e descrição.
 
 # 2. Atores do Sistema
@@ -30,7 +32,7 @@ Esta seção define os estados possíveis das principais entidades do sistema. E
 
 - **Usuário:** Usuário autenticado (`role: user`).
 
-- **Administrador:** Usuário autenticado com privilégios de moderação (`role: admin`).
+- **Administrador:** Usuário autenticado com privilégios de moderação (`role: admin`). Na versão responsiva não há telas nem rotas de moderação; o papel continua existindo no banco de dados, mas só pode ser atribuído diretamente nele.
 
 ---
 
@@ -42,7 +44,7 @@ Esta seção define os estados possíveis das principais entidades do sistema. E
 
 - **[RF02] Autenticação:** O sistema deve autenticar usuários mediante e-mail e senha válidos.
 
-- **[RF03] Gerenciamento de Perfil:** O usuário deve poder visualizar seu perfil, editar dados (nome, e-mail e informações de contato) e alterar sua senha (mediante validação da senha atual).
+- **[RF03] Gerenciamento de Perfil:** O usuário deve poder visualizar seu perfil e alterar sua senha (mediante validação da senha atual). A edição dos dados do perfil (nome, e-mail e informações de contato) está fora do escopo da versão responsiva (seção 4).
 
 - **[RF04] Desativação de Conta:** O usuário deve poder desativar sua própria conta, alterando seu status de `active` para `inactive`.
 
@@ -52,7 +54,7 @@ Esta seção define os estados possíveis das principais entidades do sistema. E
 
 ## 3.2 Funcionalidades de Postagem
 
-- **[RF06] Criação de Postagem:** O usuário deve poder criar postagens enviando obrigatoriamente as informações do pet e uma localização geográfica (`latitude` e `longitude`).
+- **[RF06] Criação de Postagem:** O usuário deve poder criar postagens enviando obrigatoriamente as informações do pet, uma localização geográfica (`latitude` e `longitude`) e o endereço do local (rua, número, bairro e cidade), que é o que fica visível para os demais usuários.
 
 - **[RF07] Upload de Mídia:** O usuário deve poder adicionar imagens às suas postagens, respeitando os formatos e limites definidos pelo sistema.
 
@@ -68,15 +70,19 @@ Esta seção define os estados possíveis das principais entidades do sistema. E
 
 - **[RF11] Feed:** O sistema deve exibir uma lista paginada de postagens públicas.
 
-- **[RF12] Visualização em Mapa:** O sistema deve exibir pins geolocalizados de postagens públicas.
+- **[RF13] Busca Geográfica e Filtros:** O sistema deve permitir a busca de postagens públicas utilizando filtros por tipo de pet, categoria, status e distância máxima em relação a um ponto geográfico de referência informado pelo usuário. Caso nenhum ponto de referência seja informado, o feed lista todas as postagens públicas, da mais recente para a mais antiga. Caso um ponto seja informado sem raio, deverá ser utilizado um valor padrão de 10 km. Na versão responsiva, os filtros existem na API, mas ainda não são oferecidos na interface.
 
-- **[RF13] Busca Geográfica e Filtros:** O sistema deve permitir a busca de postagens públicas utilizando filtros por tipo de pet, categoria, status e distância máxima em relação a um ponto geográfico de referência informado pelo usuário. Caso nenhum ponto de referência seja informado, deverá ser utilizada uma coordenada padrão configurada pelo sistema. Caso nenhum raio seja informado, deverá ser utilizado um valor padrão de 10 km. Os filtros devem ser aplicáveis tanto no feed quanto no mapa.
+- **[RF14] Detalhes da Postagem:** O sistema deve permitir a visualização detalhada de uma postagem selecionada, com o endereço do local e os meios de contato do autor, respeitando as regras de visibilidade e autorização definidas pelo sistema.
 
-- **[RF14] Detalhes da Postagem:** O sistema deve permitir a visualização detalhada no mapa de uma postagem selecionada, respeitando as regras de visibilidade e autorização definidas pelo sistema.
-                                   
 ---
 
-## 3.4 Moderação (Administrativo)
+# 4. Fora do Escopo da Versão Responsiva
+
+Os requisitos abaixo fazem parte do projeto original, mas foram retirados desta versão (telas, rotas da API e código correspondente).
+
+- **[RF03, parcial] Edição dos Dados do Perfil:** editar nome, e-mail e informações de contato.
+
+- **[RF12] Visualização em Mapa:** O sistema deve exibir pins geolocalizados de postagens públicas.
 
 - **[RF15] Gerenciamento de Usuários:** O administrador deve poder listar todos os usuários, editar informações permitidas de usuários (nome, e-mail e informações de contato) e alterar o status para `active` ou `banned`.
 

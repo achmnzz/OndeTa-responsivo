@@ -1,13 +1,12 @@
 from flask import request, jsonify
 from app.services.post_service import PostService
-from app.schemas.post_schema import FeedRequestSchema, PinsRequestSchema, PostResponseSchema, PinResponseSchema, PostCreateSchema
+from app.schemas.post_schema import FeedRequestSchema, PostResponseSchema, PostCreateSchema, MyPostUpdateSchema
 from app.controllers.auth_controller import AuthController
 
 feed_schema = FeedRequestSchema()
-pins_schema = PinsRequestSchema()
 post_response = PostResponseSchema()
-pins_response = PinResponseSchema(many=True)
 post_create_schema = PostCreateSchema()
+my_post_update_schema = MyPostUpdateSchema()
 
 
 class PostController:
@@ -31,17 +30,25 @@ class PostController:
 
 
     @staticmethod
-    def get_pins():
-        params = pins_schema.load(request.args)
-        pins = PostService.get_pins(params)
-        return jsonify(pins_response.dump(pins)), 200
-
-
-    @staticmethod
     def delete_post(post_id):
         user = AuthController.authenticate_and_authorize(lean=True)
         PostService.delete_post(post_id, user.id, is_admin=(user.role == "admin"))
         return jsonify({}), 204
+
+
+    @staticmethod
+    def get_my_posts():
+        user = AuthController.authenticate_and_authorize(lean=True)
+        posts = PostService.get_user_posts(user.id)
+        return jsonify({"posts": post_response.dump(posts, many=True)}), 200
+
+
+    @staticmethod
+    def update_my_post(post_id):
+        user = AuthController.authenticate_and_authorize(lean=True)
+        data = my_post_update_schema.load(request.get_json() or {})
+        post = PostService.update_post(post_id, user.id, data)
+        return jsonify(post_response.dump(post)), 200
 
 
     @staticmethod

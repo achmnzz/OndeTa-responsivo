@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
+import LocationPicker from '../../components/LocationPicker';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../services/api';
-import logo from '../../assets/Logo-ondeta-v1.png';
+import { getErrorMessage } from '../../services/apiErrors';
+import { reverseGeocode } from '../../services/geocoding';
+import { compressImage } from '../../utils/compressImage';
 import './styles.css';
 
 const PET_TYPES = [
@@ -10,50 +14,88 @@ const PET_TYPES = [
   { value: 'gato', label: 'Gato' },
 ];
 
-const NOMINATIM = 'https://nominatim.openstreetmap.org';
-const GEO_HEADERS = { 'User-Agent': 'OndeTa/1.0' };
+const CATEGORIES = [
+  { value: 'perdido', label: '🔍 Perdi um animal', short: 'Perdido' },
+  { value: 'encontrado', label: '🐾 Encontrei um animal', short: 'Encontrado' },
+];
 
-async function searchAddressSuggestions(query, signal) {
-  const res = await fetch(
-    `${NOMINATIM}/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=br`,
-    { headers: GEO_HEADERS, signal }
-  );
-  const data = await res.json();
-  return data.map((item) => ({
-    label: item.display_name,
-    latitude: parseFloat(item.lat),
-    longitude: parseFloat(item.lon),
-  }));
-}
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PHOTO_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
+const ADDRESS_MIN = 5;
 
 export default function CreatePost() {
-  const { user, logout } = useAuth();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [category, setCategory] = useState('');
   const [petName, setPetName] = useState('');
   const [petType, setPetType] = useState('');
   const [description, setDescription] = useState('');
-  const [coords, setCoords] = useState(null);
-  const [foundAddress, setFoundAddress] = useState('');
-  const [locationMode, setLocationMode] = useState('current');
-  const [geoLoading, setGeoLoading] = useState(false);
-  const [geoError, setGeoError] = useState('');
-  const [addressQuery, setAddressQuery] = useState('');
-  const [addressSuggestions, setAddressSuggestions] = useState([]);
-  const [addressLoading, setAddressLoading] = useState(false);
-  const [addressError, setAddressError] = useState('');
+  const [location, setLocation] = useState({ coords: null, address: '' });
+  const [locationError, setLocationError] = useState('');
+
+  const [existingImages, setExistingImages] = useState([]);
+  const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [photoProcessing, setPhotoProcessing] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+
+  const [loadingPost, setLoadingPost] = useState(isEdit);
+  const [loadError, setLoadError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const addressDebounceRef = useRef(null);
-  const addressAbortRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!user) navigate('/login');
-  }, [user]);
+    if (!isEdit) return undefined;
+    let cancelled = false;
+
+    async function load_post() {
+      try {
+        const { data } = await api.get(`/posts/${id}`);
+        if (cancelled) return;
+
+        if (data.author?.id !== user?.id) {
+          setLoadError('Você só pode editar as suas próprias postagens.');
+          return;
+        }
+
+        setCategory(data.category);
+        setPetName(data.pet_name ?? '');
+        setPetType(data.pet_type ?? '');
+        setDescription(data.description ?? '');
+        setExistingImages(data.images ?? []);
+        setLocation({
+          coords: { latitude: data.latitude, longitude: data.longitude },
+          address: data.address ?? '',
+        });
+
+        if (!data.address) {
+          reverseGeocode(data.latitude, data.longitude)
+            .then((address) => {
+              if (!cancelled && address) {
+                setLocation((prev) => (prev.address ? prev : { ...prev, address }));
+              }
+            })
+            .catch(() => {});
+        }
+      } catch (err) {
+        if (!cancelled) setLoadError(getErrorMessage(err, 'Não foi possível carregar a postagem.'));
+      } finally {
+        if (!cancelled) setLoadingPost(false);
+      }
+    }
+
+    load_post();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isEdit, user?.id]);
 
   useEffect(() => {
     return () => {
@@ -61,338 +103,315 @@ export default function CreatePost() {
     };
   }, [photoPreview]);
 
-  function handlePhotoChange(e) {
-    const file = e.target.files?.[0] ?? null;
+  async function handlePhotoChange(e) {
+    const original = e.target.files?.[0] ?? null;
+    setPhotoError('');
+    if (!original) return;
+
+    setPhotoProcessing(true);
+    const file = await compressImage(original);
+    setPhotoProcessing(false);
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!ALLOWED_PHOTO_EXTENSIONS.includes(ext)) {
+      setPhotoError('Formato de foto não suportado. Use uma foto JPG, PNG ou WEBP.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError('A foto é grande demais (máximo 5 MB). Escolha outra foto.');
+      e.target.value = '';
+      return;
+    }
+
     setPhotoFile(file);
-    setPhotoPreview(file ? URL.createObjectURL(file) : '');
+    setPhotoPreview(URL.createObjectURL(file));
   }
 
-  function handleUseLocation() {
-    if (!navigator.geolocation) {
-      setGeoError('Geolocalização não suportada pelo navegador');
-      return;
+  function handleRemovePhoto() {
+    if (photoFile) {
+      setPhotoFile(null);
+      setPhotoPreview('');
+    } else {
+      setRemoveExistingPhoto(true);
     }
-    setGeoLoading(true);
-    setGeoError('');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        setFoundAddress('');
-        setGeoLoading(false);
-      },
-      (err) => {
-        console.error('Erro de geolocalização:', err);
-        let message = 'Não foi possível obter sua localização';
-        if (err.code === err.PERMISSION_DENIED) {
-          message = 'Permissão de localização negada. Habilite o acesso à localização nas configurações do navegador pra este site.';
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          message = 'Localização indisponível no momento. Verifique se o GPS/localização está ativado no seu dispositivo.';
-        } else if (err.code === err.TIMEOUT) {
-          message = 'Tempo esgotado ao tentar obter sua localização. Tente novamente.';
-        }
-        setGeoError(message);
-        setGeoLoading(false);
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-    );
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function handleAddressChange(e) {
-    const value = e.target.value;
-    setAddressQuery(value);
-    setFoundAddress('');
-    setAddressError('');
-    clearTimeout(addressDebounceRef.current);
-    if (addressAbortRef.current) addressAbortRef.current.abort();
-
-    if (value.trim().length < 4) {
-      setAddressSuggestions([]);
-      return;
-    }
-
-    addressDebounceRef.current = setTimeout(async () => {
-      addressAbortRef.current = new AbortController();
-      setAddressLoading(true);
-      try {
-        const results = await searchAddressSuggestions(value, addressAbortRef.current.signal);
-        setAddressSuggestions(results);
-        if (results.length === 0) {
-          setAddressError('Nenhum endereço encontrado.');
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Erro ao buscar endereço:', err);
-          setAddressSuggestions([]);
-        }
-      } finally {
-        setAddressLoading(false);
-      }
-    }, 400);
-  }
-
-  function handleSelectAddress(suggestion) {
-    setAddressQuery(suggestion.label);
-    setCoords({ latitude: suggestion.latitude, longitude: suggestion.longitude });
-    setFoundAddress(suggestion.label);
-    setAddressSuggestions([]);
-  }
-
-  function handle_logout() {
-    logout();
-    navigate('/login');
+  function handleLocationChange(next) {
+    setLocation(next);
+    setLocationError('');
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitError('');
 
-    if (!coords) {
-      setSubmitError('Use sua localização antes de publicar.');
+    if (!location.coords) {
+      setLocationError('Informe o local: use sua localização atual ou digite o endereço.');
       return;
     }
 
+    const address = location.address.trim();
+    if (address.length < ADDRESS_MIN) {
+      setLocationError(
+        address
+          ? 'Endereço muito curto. Informe rua, número, bairro e cidade.'
+          : 'Informe o endereço do local (rua, número, bairro e cidade).'
+      );
+      document.getElementById('post-address')?.focus();
+      return;
+    }
+
+    const payload = {
+      pet_name: petName.trim() || null,
+      pet_type: petType,
+      category,
+      description: description.trim() || null,
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      address,
+    };
+
     setSubmitting(true);
     try {
-      const response = await api.post('/posts', {
-        pet_name: petName || undefined,
-        pet_type: petType,
-        category,
-        description: description || undefined,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-      });
-
-      if (photoFile) {
-        const formData = new FormData();
-        formData.append('file', photoFile);
-        try {
-          await api.post(`/me/posts/${response.data.id}/images`, formData, {
-            headers: { 'Content-Type': undefined },
-          });
-        } catch (photoErr) {
-          // O post já foi criado; só a foto falhou. Avisa, mas não bloqueia.
-          setSubmitError(
-            'Postagem criada, mas houve um erro ao enviar a foto: ' +
-            (photoErr.response?.data?.message ?? photoErr.response?.data?.error ?? 'erro desconhecido')
-          );
-          setSubmitting(false);
-          return;
-        }
+      let postId = id;
+      if (isEdit) {
+        await api.patch(`/me/posts/${id}`, payload);
+      } else {
+        const response = await api.post('/posts', payload);
+        postId = response.data.id;
       }
 
-      navigate('/feed', { state: { showMyPosts: true } });
+      let photoNotice = '';
+      try {
+        if (isEdit && (removeExistingPhoto || photoFile)) {
+          for (const img of existingImages) {
+            await api.delete(`/me/images/${img.id}`);
+          }
+        }
+        if (photoFile) {
+          const formData = new FormData();
+          formData.append('file', photoFile);
+          await api.post(`/me/posts/${postId}/images`, formData, {
+            headers: { 'Content-Type': undefined },
+          });
+        }
+      } catch (photoErr) {
+        photoNotice =
+          'Postagem salva, mas houve um erro com a foto: ' +
+          getErrorMessage(photoErr, 'erro desconhecido');
+      }
+
+      if (isEdit) {
+        navigate(`/posts/${id}`, {
+          replace: true,
+          state: { notice: photoNotice || 'Postagem atualizada!' },
+        });
+      } else {
+        navigate('/feed', { state: { showMyPosts: true, notice: photoNotice } });
+      }
     } catch (err) {
-      setSubmitError(
-        err.response?.data?.message ?? err.response?.data?.error ?? 'Erro ao criar postagem'
-      );
-    } finally {
+      const addressError = err.response?.data?.details?.address?.[0];
+      if (addressError) {
+        setLocationError(addressError);
+      } else {
+        setSubmitError(getErrorMessage(err, isEdit ? 'Erro ao salvar as alterações' : 'Erro ao criar postagem'));
+      }
       setSubmitting(false);
     }
   }
 
+  const showExistingPhoto =
+    isEdit && existingImages.length > 0 && !removeExistingPhoto && !photoPreview;
+  const hasPhoto = Boolean(photoPreview) || showExistingPhoto;
+
+  let title = 'O que aconteceu?';
+  if (isEdit) title = 'Editar postagem';
+  else if (category === 'perdido') title = 'Perdi um animal';
+  else if (category === 'encontrado') title = 'Encontrei um animal';
+
   return (
     <div className="create-post-container">
-      <header className="create-post-header">
-        <img src={logo} alt="OndeTá?" className="create-post-header-logo" />
-        <div className="create-post-header-actions">
-          <button className="create-post-nav-btn" onClick={() => navigate('/feed')}>
-            Feed
-          </button>
-          <button className="create-post-nav-btn" onClick={() => navigate('/feed', { state: { showMyPosts: true } })}>
-            Minhas postagens
-          </button>
-          <button className="create-post-nav-btn" onClick={() => navigate('/map')}>
-            Mapa
-          </button>
-          <button className="create-post-nav-btn create-post-nav-btn--active">
-            Criar postagem
-          </button>
-          <button className="create-post-nav-btn" onClick={() => navigate('/profile')}>
-            Meu perfil
-          </button>
-          <button className="create-post-logout-btn" onClick={handle_logout}>
-            Sair
-          </button>
-        </div>
-      </header>
+      <Navbar active={isEdit ? 'my-posts' : 'create'} />
 
       <main className="create-post-main">
-      <div className="create-post-card">
-        <h1 className="create-post-title">
-          {category === 'perdido' && 'Perdi um animal'}
-          {category === 'encontrado' && 'Encontrei um animal'}
-          {!category && 'O que aconteceu?'}
-        </h1>
+        <div className="create-post-card">
+          <h1 className="create-post-title">{title}</h1>
 
-        {!category && (
-          <div className="create-post-category-options">
-            <button
-              type="button"
-              className="create-post-category-btn"
-              onClick={() => setCategory('perdido')}
-            >
-              🔍 Perdi um animal
-            </button>
-            <button
-              type="button"
-              className="create-post-category-btn"
-              onClick={() => setCategory('encontrado')}
-            >
-              🐾 Encontrei um animal
-            </button>
-          </div>
-        )}
+          {isEdit && loadingPost && <p className="create-post-status" role="status">Carregando...</p>}
 
-        {category && (
-          <form onSubmit={handleSubmit} className="create-post-form">
-            <button
-              type="button"
-              className="create-post-change-category-btn"
-              onClick={() => setCategory('')}
-            >
-              ← Trocar
-            </button>
-
-            <div className="create-post-field">
-              <label htmlFor="petName">
-                Nome do animal <span className="create-post-optional">(opcional)</span>
-              </label>
-              <input
-                id="petName"
-                type="text"
-                value={petName}
-                onChange={(e) => setPetName(e.target.value)}
-                placeholder="Ex: Rex"
-              />
-            </div>
-
-            <div className="create-post-field">
-              <label htmlFor="petType">Tipo</label>
-              <select
-                id="petType"
-                value={petType}
-                onChange={(e) => setPetType(e.target.value)}
-                required
+          {loadError && (
+            <div className="create-post-load-error">
+              <p className="create-post-error" role="alert">{loadError}</p>
+              <button
+                type="button"
+                className="create-post-secondary-btn"
+                onClick={() => navigate('/feed', { state: { showMyPosts: true } })}
               >
-                <option value="">Selecione</option>
-                {PET_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+                Ir para Minhas postagens
+              </button>
             </div>
+          )}
 
-            <div className="create-post-field">
-              <label htmlFor="description">
-                Descrição <span className="create-post-optional">(opcional)</span>
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Características do animal, local onde foi visto..."
-                rows={4}
-              />
+          {!isEdit && !category && (
+            <div className="create-post-category-options">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  className="create-post-category-btn"
+                  onClick={() => setCategory(c.value)}
+                >
+                  {c.label}
+                </button>
+              ))}
             </div>
+          )}
 
-            <div className="create-post-field">
-              <label htmlFor="photo">
-                Foto <span className="create-post-optional">(opcional)</span>
-              </label>
-              <input
-                id="photo"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handlePhotoChange}
-              />
-              {photoPreview && (
-                <img src={photoPreview} alt="Pré-visualização" className="create-post-photo-preview" />
+          {category && !loadError && (
+            <form onSubmit={handleSubmit} className="create-post-form">
+              {isEdit ? (
+                <div className="create-post-field">
+                  <span className="create-post-label" id="categoria-label">Situação</span>
+                  <div className="create-post-segmented" role="group" aria-labelledby="categoria-label">
+                    {CATEGORIES.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        className={`create-post-segment ${category === c.value ? 'create-post-segment--active' : ''}`}
+                        aria-pressed={category === c.value}
+                        onClick={() => setCategory(c.value)}
+                      >
+                        {c.short}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="create-post-change-category-btn"
+                  onClick={() => setCategory('')}
+                >
+                  ← Trocar
+                </button>
               )}
-            </div>
 
-            <div className="create-post-field">
-              <label>Localização</label>
-
-              <div className="create-post-location-tabs">
-                <button
-                  type="button"
-                  className={`create-post-location-tab ${locationMode === 'current' ? 'create-post-location-tab--active' : ''}`}
-                  onClick={() => {
-                    setLocationMode('current');
-                    handleUseLocation();
-                  }}
-                  disabled={geoLoading}
-                >
-                  Usar localização atual
-                </button>
-                <button
-                  type="button"
-                  className={`create-post-location-tab ${locationMode === 'address' ? 'create-post-location-tab--active' : ''}`}
-                  onClick={() => setLocationMode('address')}
-                >
-                  Digitar endereço
-                </button>
+              <div className="create-post-field">
+                <label htmlFor="petName">
+                  Nome do animal <span className="create-post-optional">(opcional)</span>
+                </label>
+                <input
+                  id="petName"
+                  type="text"
+                  value={petName}
+                  onChange={(e) => setPetName(e.target.value)}
+                  placeholder="Ex: Rex"
+                  autoComplete="off"
+                  autoCapitalize="words"
+                  enterKeyHint="next"
+                  maxLength={100}
+                />
               </div>
 
-              {locationMode === 'current' ? (
-                <>
-                  {geoLoading && <p className="create-post-location-status">Obtendo localização...</p>}
-                  {!geoLoading && coords && !foundAddress && (
-                    <p className="create-post-address-found">Localização obtida ✓</p>
-                  )}
-                  {!geoLoading && geoError && (
-                    <>
-                      <p className="create-post-error">{geoError}</p>
-                      <button type="button" className="create-post-retry-btn" onClick={handleUseLocation}>
-                        Tentar novamente
-                      </button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="create-post-address-autocomplete">
-                    <input
-                      type="text"
-                      value={addressQuery}
-                      onChange={handleAddressChange}
-                      onBlur={() => setTimeout(() => setAddressSuggestions([]), 150)}
-                      placeholder="Ex: Rua das Flores, 123, Curitiba"
-                      autoComplete="off"
-                    />
-                    {addressLoading && <span className="create-post-address-loading">Buscando...</span>}
-                    {addressSuggestions.length > 0 && (
-                      <ul className="create-post-dropdown">
-                        {addressSuggestions.map((s, i) => (
-                          <li
-                            key={i}
-                            className="create-post-dropdown-item"
-                            onMouseDown={() => handleSelectAddress(s)}
-                          >
-                            {s.label}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  {foundAddress && (
-                    <p className="create-post-address-found">Endereço selecionado: {foundAddress}</p>
-                  )}
-                  {addressError && <p className="create-post-error">{addressError}</p>}
-                </>
-              )}
-            </div>
+              <div className="create-post-field">
+                <label htmlFor="petType">Tipo</label>
+                <select
+                  id="petType"
+                  value={petType}
+                  onChange={(e) => setPetType(e.target.value)}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  {PET_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            {submitError && <p className="create-post-error">{submitError}</p>}
+              <div className="create-post-field">
+                <label htmlFor="description">
+                  Descrição <span className="create-post-optional">(opcional)</span>
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Características do animal, local onde foi visto..."
+                  rows={4}
+                  autoCapitalize="sentences"
+                />
+              </div>
 
-            <button type="submit" className="create-post-submit-btn" disabled={submitting}>
-              {submitting ? 'Publicando...' : 'Publicar postagem'}
-            </button>
-          </form>
-        )}
-      </div>
+              <div className="create-post-field">
+                <label htmlFor="photo">
+                  {hasPhoto ? 'Trocar foto' : 'Foto'} <span className="create-post-optional">(opcional)</span>
+                </label>
+
+                {showExistingPhoto && (
+                  <img
+                    src={existingImages[0].url}
+                    alt="Foto atual da postagem"
+                    className="create-post-photo-preview"
+                  />
+                )}
+                {photoPreview && (
+                  <img src={photoPreview} alt="Pré-visualização da nova foto" className="create-post-photo-preview" />
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="create-post-file-input"
+                />
+                {hasPhoto && (
+                  <button type="button" className="create-post-remove-photo-btn" onClick={handleRemovePhoto}>
+                    Remover foto
+                  </button>
+                )}
+                {photoProcessing && (
+                  <p className="create-post-status" role="status">Preparando a foto...</p>
+                )}
+                {photoError && <p className="create-post-error" role="alert">{photoError}</p>}
+              </div>
+
+              <LocationPicker
+                value={location}
+                onChange={handleLocationChange}
+                autoLocate={!isEdit}
+                error={locationError}
+              />
+
+              {submitError && <p className="create-post-error" role="alert">{submitError}</p>}
+
+              <div className="create-post-actions">
+                <button
+                  type="submit"
+                  className="create-post-submit-btn"
+                  disabled={submitting || photoProcessing}
+                >
+                  {isEdit
+                    ? (submitting ? 'Salvando...' : 'Salvar alterações')
+                    : (submitting ? 'Publicando...' : 'Publicar postagem')}
+                </button>
+                {isEdit && (
+                  <button
+                    type="button"
+                    className="create-post-secondary-btn"
+                    onClick={() => navigate(`/posts/${id}`, { replace: true })}
+                    disabled={submitting}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
       </main>
     </div>
   );

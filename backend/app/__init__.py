@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from marshmallow import ValidationError
+from werkzeug.exceptions import HTTPException
 from .config import Config
 from app.extensions import db, bcrypt, jwt
 from app.utils.exceptions import APIError
@@ -23,12 +24,10 @@ def create_app():
     from app.routes.auth_routes import auth_bp
     from app.routes.post_routes import post_bp
     from app.routes.me_routes import me_bp
-    from app.routes.admin_routes import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(post_bp)
     app.register_blueprint(me_bp)
-    app.register_blueprint(admin_bp)
 
     register_error_handlers(app)
 
@@ -48,6 +47,19 @@ def register_error_handlers(app):
             "message": "Dados inválidos",
             "details": err.messages
         }), 400
+
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        messages = {
+            404: "Recurso não encontrado.",
+            405: "Método não permitido para este endereço.",
+            413: "Arquivo grande demais. O limite é de 5 MB.",
+        }
+        return jsonify({
+            "status": "error",
+            "message": messages.get(error.code, error.description)
+        }), error.code
 
 
     @app.errorhandler(Exception)
